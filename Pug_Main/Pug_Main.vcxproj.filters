@@ -16,21 +16,21 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Pug_Main.ino" />
-    <None Include="..\..\..\Users\bazue\Desktop\Comms.ino" />
-    <None Include="..\..\..\Users\bazue\Desktop\Hardware.ino" />
-    <None Include="..\..\..\Users\bazue\Desktop\Navigation.ino" />
+    <None Include="Comms.ino" />
+    <None Include="Hardware.ino" />
+    <None Include="Navigation.ino" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__vm\.Pug_Main.vsarduino.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\Users\bazue\Desktop\Comms.h">
+    <ClInclude Include="Comms.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\Users\bazue\Desktop\Hardware.h">
+    <ClInclude Include="Hardware.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\Users\bazue\Desktop\Navigation.h">
+    <ClInclude Include="Navigation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
