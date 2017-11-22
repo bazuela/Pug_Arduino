@@ -105,7 +105,7 @@ void loop(){
               break;
             case 6:
               sayYes();
-              break;
+			  break;
             case 7:
               hypnotize();
               break;  
