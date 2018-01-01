@@ -591,6 +591,7 @@ void setPixelRGB(int Pixel, int Red, int Green, int Blue){//Ver. 1.0, Dustin Soo
   pixels.show();//Remove this line and use RefreshPixels() below 
   //              if you want to set several at once for high-speed patterns.
 }
+
 void setAllPixelsRGB(int Red, int Green, int Blue){//Ver. 1.1, Dustin Soodak
   char i;
   for(i=0;i<NUM_PIXELS;i++){
@@ -598,6 +599,31 @@ void setAllPixelsRGB(int Red, int Green, int Blue){//Ver. 1.1, Dustin Soodak
   }
   pixels.show();//added Ver.1.1
 }
+
+void showRunningMode(int runningMode)
+{
+	//Set right wing
+	int rightWingLeds = runningMode + WING_RIGHT_START;
+	int leftWingLeds = runningMode + WING_LEFT_START;
+	if (rightWingLeds > WING_RIGHT_END)
+		rightWingLeds = WING_RIGHT_END; //JIC
+	if (leftWingLeds > WING_LEFT_END)
+		leftWingLeds = WING_LEFT_END; //JIC
+	// turn off all the wing leds
+	rightWing(0, 0, 0);
+	leftWing(0, 0, 0);
+	// set right wing and left wing to running mode display - use limegreen
+	for (int i = WING_RIGHT_START; i < rightWingLeds; i++)
+	{
+		setPixelRGB(i, 50, 205, 0);
+	}
+	for (int i = WING_LEFT_START; i < leftWingLeds; i++)
+	{
+		setPixelRGB(i, 50, 205, 0);
+	}
+	delay(3000); // display for at least 3 seconds
+}
+
 void RefreshPixels(void){//Ver. 1.0, Dustin Soodak
   pixels.show();  
 }

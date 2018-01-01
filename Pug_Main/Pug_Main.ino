@@ -3,9 +3,11 @@
 
 Spirit Rover Robot
 Spirit_PreLoadedDemo_Rev01
-Version 1.1 10/2017
+Version 1.2.0 Jan 1 2018
 
-Significant portions of this code written by
+Author: Blake Azuela
+
+Original Development Attribution goes to:
 Dustin Soodak for Plum Geek LLC. Some portions
 contributed by Kevin King.
 Portions from other open source projects where noted.
@@ -41,6 +43,7 @@ void setup(){
   setAllPixelsRGB(0,0,5);
   setPixelRGB(WING_LEFT_END,0,0,10);
   setPixelRGB(WING_RIGHT_END,0,0,10);
+  showRunningMode(runningMode);
 
   if(buttonPressed()){      //if button is being pressed during installation...
     servoInstall();         //run the servo install code
@@ -81,220 +84,267 @@ int lightSeekTurnStrength = 50;   //difference between motor speeds - larger num
 
 void loop(){
   
-  while (runningMode == 1){
+  while (runningMode == 1)
+  {
+	  // ROV mode 
+	  motors(0, 0);  //make sure motors are stopped
+	  offChirp();   //make sure chirp is turned off
+	  if (buttonPressed())
+	  {
+		  setAllPixelsRGB(0, 10, 10);
+		  motors(0, 0);  //make sure motors are stopped
+		  offChirp();   //make sure chirp is turned off
+		  showRunningMode(runningMode);
+		  delay(100);   //short delay to debounce button
+		  while (buttonPressed()) 
+		  {  //wait for button to be released
+			 // do nothing, wait for button to be released
+		  }
+		  delay(100);   //short delay to debounce button
+	  } //end if (buttonPressed())
 
-        if(PIC_ReadRangefinderCounts() < rangeCountsToTriggerAction){
-
-          int exampleToRun = random(1, exampleCount+1);   //randomly choose an example to run
-          
-          switch (exampleToRun){
-            case 1:
-              chirpAndEyes();
-              break;
-            case 2:
-              getJiggy();//twinkleEyes();
-              break;
-            case 3:
-              cycleGripper();
-              break;  
-            case 4:
-              dance01();
-              break;
-            case 5:
-              sayNo();
-              break;
-            case 6:
-              sayYes();
-			  break;
-            case 7:
-              hypnotize();
-              break;  
-            case 8:
-             // jumpForward();
-              break;
-            case 9:
-             // jumpBackward();
-              break;
-            case 10:
-             // spinCheer();
-              break;
-            case 11:
-              doublePump();
-              break;
-            default:
-              // do nothing
-              break;
-          } // end switch
-          
-        } // end if rangefinder
-
-        //check for button press to advance to the next running mode
-        if (buttonPressed()){
-        setAllPixelsRGB(0,10,10);
-        runningMode = 2;
-        delay(100);   //short delay to debounce button
-        motors(0,0);  //make sure motors are off when leaving this mode
-        offChirp();   //mkae sure chirp is off when leaving this mode
-        while (buttonPressed()){  //wait for button to be released
-            // do nothing, wait for button to be released
-            }
-        delay(100);   //short delay to debounce button
-        } //end if (buttonPressed())
-
-        SPI_Handler();  //checks to see if SPI communication (usually motor command signals from Raspberry Pi) has been received
-                        //if a motor control message is received from Pi, it will set runningMode to zero and break out of this behavior
-        delay(50);
-
+	  SPI_Handler();  //checks to see if SPI communication (usually motor command signals from Raspberry Pi) has been received
+					  //if a motor control message is received from Pi, it will set runningMode to zero and break out of this behavior
+	  delay(50);
   } //end while (runningMode == 1)
 
-  
-  while (runningMode == 2){
+  while (runningMode == 2)
+  {
+	  // random reaction mode
+	  if (PIC_ReadRangefinderCounts() < rangeCountsToTriggerAction) 
+	  {
 
-      motors(roamMotorSpeed,roamMotorSpeed);
-      
-      timeStamp = millis();   //get starting timestamp 
-      while(millis() < (timeStamp+runBeforeRandomStuff)){
-           
-         //Evaluate if we're over an edge
-         PIC_ReadAllSurfaceSensorsInstant();
-         delay(5);
-    
-            if ((surfLeft1 <= (surfaceBaselineLeft - bottomSensorThreshold)) || (surfLeft1 >= (surfaceBaselineLeft + bottomSensorThreshold))){
-              //Serial.print("1"); Serial.print("Backup Left "); Serial.print(surfLeft1); Serial.print("\t"); Serial.print(surfaceBaselineLeft);
-              //Serial.print("\t"); Serial.print(bottomSensorThreshold); Serial.print("\t"); Serial.println(surfaceBaselineLeft - bottomSensorThreshold);
-              //playNonAck();
-              backAwayFromLeftEdge();
-              timeStamp = millis();   //reset timestamp
-              motors(roamMotorSpeed,roamMotorSpeed); //turn the motors back on
-            }
-          
-            if ((surfRight1 <= (surfaceBaselineRight - bottomSensorThreshold)) || (surfRight1 >= (surfaceBaselineRight + bottomSensorThreshold))){
-              //Serial.print("1"); Serial.print("Backup Right "); Serial.print(surfRight1); Serial.print("\t"); Serial.print(surfaceBaselineRight);
-              //Serial.print("\t"); Serial.print(bottomSensorThreshold); Serial.print("\t"); Serial.println(surfaceBaselineRight - bottomSensorThreshold);
-              //playNonAck();
-              backAwayFromRightEdge();
-              timeStamp = millis();   //reset timestamp
-              motors(roamMotorSpeed,roamMotorSpeed); //turn the motors back on
-            }
+		  int exampleToRun = random(1, exampleCount + 1);   //randomly choose an example to run
 
-          if(PIC_ReadRangefinderCounts() < rangeCountsToSeeObject){
-                 motors(0,0);
-                 if(rangeSweep()){ //will cause head to sweep range. If barrier is found to be right, this If will be true. Barrier left, it will be false.
-                     //it was true that barrier was more likely on the right
-                     motors(-100,100); //rotate slightly left (away from barrier)
-                 }else{
-                     //it was false that barrier was more likely on the right, so it must be more to the left
-                     motors(100,-100); //rotate slightly right (away from barrier)
-                 }
-                 delay(750);      
-                 motors(0,0);
-                 timeStamp = millis();   //reset timestamp
-                 motors(roamMotorSpeed,roamMotorSpeed); //turn the motors back on
-          }// end if(PIC_ReadRangefinderCounts()  
-           
-          
-          //check for button press to advance to the next running mode
-          if (buttonPressed()){
-              setAllPixelsRGB(0,10,10);
-              runningMode = 3;
-              setAllPixelsRGB(0,0,0);
-              setPixelRGB(WING_LEFT_END,10,10,0);
-              setPixelRGB(WING_RIGHT_END,10,10,0);
-              onEyes(10,10,0);
-              
-              delay(100);   //short delay to debounce button
-              motors(0,0);  //make sure motors are off when leaving this mode
-              offChirp();   //mkae sure chirp is off when leaving this mode
-              while (buttonPressed()){  //wait for button to be released
-                  // do nothing, wait for button to be released
-                  }
-              delay(100);   //short delay to debounce button
-              break;        //get out of while loop
-          } //end if (buttonPressed())
+		  switch (exampleToRun) 
+		  {
+		  case 1:
+			  chirpAndEyes();
+			  break;
+		  case 2:
+			  getJiggy();//twinkleEyes();
+			  break;
+		  case 3:
+			  cycleGripper();
+			  break;
+		  case 4:
+			  dance01();
+			  break;
+		  case 5:
+			  sayNo();
+			  break;
+		  case 6:
+			  sayYes();
+			  break;
+		  case 7:
+			  hypnotize();
+			  break;
+		  case 8:
+			  // jumpForward();
+			  break;
+		  case 9:
+			  // jumpBackward();
+			  break;
+		  case 10:
+			  // spinCheer();
+			  break;
+		  case 11:
+			  doublePump();
+			  break;
+		  default:
+			  // do nothing
+			  break;
+		  } // end switch
 
-          SPI_Handler();  //checks to see if SPI communication (usually motor command signals from Raspberry Pi) has been received
-                          //if a motor control message is received from Pi, it will set runningMode to zero and break out of this behavior
-        
-      } //end while(millis()
-      
-      byte randomAction;            //occasionally do some random action
-      randomAction = random(0,12);  //larger number will make the action less likely to happen
+	  } // end if rangefinder
 
-      switch (randomAction){
-            case 1:
-              motors(-120,-120);  //back up a short bit in case rover was nearing an edge
-              delay(300);
-              motors(0,0);
-              spinCheer();
-              break;
-            case 2:
-              motors(-120,-120);  //back up a short bit in case rover was nearing an edge
-              delay(300);
-              motors(0,0);
-              getJiggy();
-              break;
-            case 3:
-              motors(-60,-60);  //back up a short bit in case rover was nearing an edge
-              delay(150);
-              motors(0,0);
-              doublePump();
-              break;
-            default:
-              // do nothing
-              break;
-          } // end switch
- 
-      delay(50);
-      timeStamp = millis();   //reset timestamp
-      motors(0,0);  // in case we exit this behavior (motors are re-started immediatley at the top, no normally motors won't actually stop)
+		//check for button press to advance to the next running mode
+	  if (buttonPressed()) 
+	  {
+		  setAllPixelsRGB(0, 10, 10);
+		  runningMode = 2;
+		  showRunningMode(runningMode);
+		  delay(100);   //short delay to debounce button
+		  motors(0, 0);  //make sure motors are off when leaving this mode
+		  offChirp();   //mkae sure chirp is off when leaving this mode
+		  while (buttonPressed()) 
+		  {  //wait for button to be released
+			 // do nothing, wait for button to be released
+		  }
+		  delay(100);   //short delay to debounce button
+	  } //end if (buttonPressed())
+
+	  SPI_Handler();  //checks to see if SPI communication (usually motor command signals from Raspberry Pi) has been received
+					  //if a motor control message is received from Pi, it will set runningMode to zero and break out of this behavior
+	  delay(50);
   
   } //end while (runningMode == 2)
 
-  while (runningMode == 3){
+  while (runningMode == 3)
+  {
+	  // Roaming mode
+	  motors(roamMotorSpeed, roamMotorSpeed);
 
-       onEyes(10,10,0);
-              
-       PIC_ReadAllAmbientSensors();
-       if(ambLeft > ambRight){
-              motors(lightSeekMotorSpeed-lightSeekTurnStrength,lightSeekMotorSpeed+lightSeekTurnStrength);    
-         }else{
-              motors(lightSeekMotorSpeed+lightSeekTurnStrength,lightSeekMotorSpeed-lightSeekTurnStrength);
-         } 
+	  timeStamp = millis();   //get starting timestamp 
+	  while (millis() < (timeStamp + runBeforeRandomStuff)) 
+	  {
 
-       if(PIC_ReadRangefinderCounts() < rangeCountsToSeeObject){
-              motors(0,0);
-              if(rangeSweep()){ //will cause head to sweep range. If barrier is found to be right, this If will be true. Barrier left, it will be false.
-                  //it was true that barrier was more likely on the right
-                  motors(-100,100); //rotate slightly left (away from barrier)
-              }else{
-                  //it was false that barrier was more likely on the right, so it must be more to the left
-                  motors(100,-100); //rotate slightly right (away from barrier)
-              }
-              delay(750);      
-              motors(0,0);
-       }// end if(PIC_ReadRangefinderCounts()  
-          
-        //check for button press to advance to the next running mode
-        if (buttonPressed()){
-            setAllPixelsRGB(0,10,10);
-            motors(0,0);  //make sure motors are stopped
-            offChirp();   //make sure chirp is turned off
-            runningMode = 1;  //back to default running mode
-            delay(100);   //short delay to debounce button
-            while (buttonPressed()){  //wait for button to be released
-                // do nothing, wait for button to be released
-                }
-            delay(100);   //short delay to debounce button
-        } //end if (buttonPressed())
+		  //Evaluate if we're over an edge
+		  PIC_ReadAllSurfaceSensorsInstant();
+		  delay(5);
 
-        SPI_Handler();  //checks to see if SPI communication (usually motor command signals from Raspberry Pi) has been received
-                        //if a motor control message is received from Pi, it will set runningMode to zero and break out of this behavior
-        delay(50);
+		  if ((surfLeft1 <= (surfaceBaselineLeft - bottomSensorThreshold)) || (surfLeft1 >= (surfaceBaselineLeft + bottomSensorThreshold))) 
+		  {
+			  //Serial.print("1"); Serial.print("Backup Left "); Serial.print(surfLeft1); Serial.print("\t"); Serial.print(surfaceBaselineLeft);
+			  //Serial.print("\t"); Serial.print(bottomSensorThreshold); Serial.print("\t"); Serial.println(surfaceBaselineLeft - bottomSensorThreshold);
+			  //playNonAck();
+			  backAwayFromLeftEdge();
+			  timeStamp = millis();   //reset timestamp
+			  motors(roamMotorSpeed, roamMotorSpeed); //turn the motors back on
+		  }
+
+		  if ((surfRight1 <= (surfaceBaselineRight - bottomSensorThreshold)) || (surfRight1 >= (surfaceBaselineRight + bottomSensorThreshold))) 
+		  {
+			  //Serial.print("1"); Serial.print("Backup Right "); Serial.print(surfRight1); Serial.print("\t"); Serial.print(surfaceBaselineRight);
+			  //Serial.print("\t"); Serial.print(bottomSensorThreshold); Serial.print("\t"); Serial.println(surfaceBaselineRight - bottomSensorThreshold);
+			  //playNonAck();
+			  backAwayFromRightEdge();
+			  timeStamp = millis();   //reset timestamp
+			  motors(roamMotorSpeed, roamMotorSpeed); //turn the motors back on
+		  }
+
+		  if (PIC_ReadRangefinderCounts() < rangeCountsToSeeObject) 
+		  {
+			  motors(0, 0);
+			  if (rangeSweep()) 
+			  { //will cause head to sweep range. If barrier is found to be right, this If will be true. Barrier left, it will be false.
+								  //it was true that barrier was more likely on the right
+				  motors(-100, 100); //rotate slightly left (away from barrier)
+			  }
+			  else {
+				  //it was false that barrier was more likely on the right, so it must be more to the left
+				  motors(100, -100); //rotate slightly right (away from barrier)
+			  }
+			  delay(750);
+			  motors(0, 0);
+			  timeStamp = millis();   //reset timestamp
+			  motors(roamMotorSpeed, roamMotorSpeed); //turn the motors back on
+		  }// end if(PIC_ReadRangefinderCounts()  
+
+
+		   //check for button press to advance to the next running mode
+		  if (buttonPressed()) 
+		  {
+			  setAllPixelsRGB(0, 10, 10);
+			  runningMode = 3;
+			  setAllPixelsRGB(0, 0, 0);
+			  showRunningMode(runningMode);
+			  onEyes(10, 10, 0);
+			  delay(100);   //short delay to debounce button
+			  motors(0, 0);  //make sure motors are off when leaving this mode
+			  offChirp();   //mkae sure chirp is off when leaving this mode
+			  while (buttonPressed()) 
+			  {  //wait for button to be released
+				 // do nothing, wait for button to be released
+			  }
+			  delay(100);   //short delay to debounce button
+			  break;        //get out of while loop
+		  } //end if (buttonPressed())
+
+		  SPI_Handler();  //checks to see if SPI communication (usually motor command signals from Raspberry Pi) has been received
+						  //if a motor control message is received from Pi, it will set runningMode to zero and break out of this behavior
+
+	  } //end while(millis()
+
+	  byte randomAction;            //occasionally do some random action
+	  randomAction = random(0, 12);  //larger number will make the action less likely to happen
+
+	  switch (randomAction) 
+	  {
+	  case 1:
+		  motors(-120, -120);  //back up a short bit in case rover was nearing an edge
+		  delay(300);
+		  motors(0, 0);
+		  spinCheer();
+		  break;
+	  case 2:
+		  motors(-120, -120);  //back up a short bit in case rover was nearing an edge
+		  delay(300);
+		  motors(0, 0);
+		  getJiggy();
+		  break;
+	  case 3:
+		  motors(-60, -60);  //back up a short bit in case rover was nearing an edge
+		  delay(150);
+		  motors(0, 0);
+		  doublePump();
+		  break;
+	  default:
+		  // do nothing
+		  break;
+	  } // end switch
+
+	  delay(50);
+	  timeStamp = millis();   //reset timestamp
+	  motors(0, 0);  // in case we exit this behavior (motors are re-started immediatley at the top, no normally motors won't actually stop)
         
   } //end while (runningMode == 3) 
 
-  if (servoInstallMode == 1){
-    while(!buttonPressed()){  //while button is not pressed...
+  while (runningMode == 4)
+  {
+	  // Chase light mode
+	  onEyes(10, 10, 0);
+	  PIC_ReadAllAmbientSensors();
+	  if (ambLeft > ambRight) 
+	  {
+		  motors(lightSeekMotorSpeed - lightSeekTurnStrength, lightSeekMotorSpeed + lightSeekTurnStrength);
+	  }
+	  else 
+	  {
+		  motors(lightSeekMotorSpeed + lightSeekTurnStrength, lightSeekMotorSpeed - lightSeekTurnStrength);
+	  }
+
+	  if (PIC_ReadRangefinderCounts() < rangeCountsToSeeObject) 
+	  {
+		  motors(0, 0);
+		  if (rangeSweep()) { //will cause head to sweep range. If barrier is found to be right, this If will be true. Barrier left, it will be false.
+							  //it was true that barrier was more likely on the right
+			  motors(-100, 100); //rotate slightly left (away from barrier)
+		  }
+		  else 
+		  {
+			  //it was false that barrier was more likely on the right, so it must be more to the left
+			  motors(100, -100); //rotate slightly right (away from barrier)
+		  }
+		  delay(750);
+		  motors(0, 0);
+	  }// end if(PIC_ReadRangefinderCounts()  
+
+	   //check for button press to advance to the next running mode
+	  if (buttonPressed()) 
+	  {
+		  setAllPixelsRGB(0, 10, 10);
+		  motors(0, 0);  //make sure motors are stopped
+		  offChirp();   //make sure chirp is turned off
+		  runningMode = 4;  //Move to ROV mode
+		  showRunningMode(runningMode);
+		  delay(100);   //short delay to debounce button
+		  while (buttonPressed()) 
+		  {  //wait for button to be released
+			 // do nothing, wait for button to be released
+		  }
+		  delay(100);   //short delay to debounce button
+	  } //end if (buttonPressed())
+
+	  SPI_Handler();  //checks to see if SPI communication (usually motor command signals from Raspberry Pi) has been received
+					  //if a motor control message is received from Pi, it will set runningMode to zero and break out of this behavior
+	  delay(50);
+  } //end while (runningMode == 3) 
+
+  if (servoInstallMode == 1)
+  {
+    while(!buttonPressed())
+	{  //while button is not pressed...
       // do nothing
     }
     servoInstall();           //re-run the servo install code if button pressed again
