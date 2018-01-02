@@ -622,6 +622,9 @@ void showRunningMode(int runningMode)
 		setPixelRGB(i, 50, 205, 0);
 	}
 	delay(3000); // display for at least 3 seconds
+	// turn off all the wing leds
+	rightWing(0, 0, 0);
+	leftWing(0, 0, 0);
 }
 
 void RefreshPixels(void){//Ver. 1.0, Dustin Soodak
